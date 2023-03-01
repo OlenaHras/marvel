@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { CSSTransition, TransitionGroup } from "react-transition-group";
 import PropTypes from "prop-types";
 import useMarvelService from "../../services/MarvelService";
 import Spinner from "../spinner/Spinner";
@@ -54,30 +55,33 @@ const CharList = (props) => {
       {errorMessage}
       {spinner}
       <ul className="char__grid">
-        {list.length > 0 &&
-          // !loading &&
-          list.map(({ id, thumb, name }, i) => {
-            const imgStyle =
-              thumb ===
-              "http://i.annihil.us/u/prod/marvel/i/mg/b/40/image_not_available.jpg"
-                ? { objectFit: "contain" }
-                : { objectFit: "cover" };
-            return (
-              <li
-                ref={(el) => (itemRefs.current[i] = el)}
-                tabIndex="0"
-                className={"char__item"}
-                key={id}
-                onClick={() => {
-                  onItemFocus(i);
-                  props.onCharSelected(id);
-                }}
-              >
-                <img src={thumb} alt="character" style={imgStyle} />
-                <div className="char__name">{name}</div>
-              </li>
-            );
-          })}
+        <TransitionGroup component={null}>
+          {list.length > 0 &&
+            list.map(({ id, thumb, name }, i) => {
+              const imgStyle =
+                thumb ===
+                "http://i.annihil.us/u/prod/marvel/i/mg/b/40/image_not_available.jpg"
+                  ? { objectFit: "contain" }
+                  : { objectFit: "cover" };
+              return (
+                <CSSTransition key={id} timeout={500} classNames="char__item">
+                  <li
+                    ref={(el) => (itemRefs.current[i] = el)}
+                    tabIndex="0"
+                    className="char__item"
+                    key={id}
+                    onClick={() => {
+                      onItemFocus(i);
+                      props.onCharSelected(id);
+                    }}
+                  >
+                    <img src={thumb} alt="character" style={imgStyle} />
+                    <div className="char__name">{name}</div>
+                  </li>
+                </CSSTransition>
+              );
+            })}
+        </TransitionGroup>
       </ul>
       <button
         className="button button__main button__long"

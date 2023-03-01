@@ -19,6 +19,19 @@ const useMarvelService = () => {
     return _transformCharacter(res.data.results[0]);
   };
 
+  const getAllComicses = async (offset) => {
+    const res = await request(
+      `${_apiBase}comics?limit=8&offset=${offset}&${_apiKey}`
+    );
+    return res.data.results.map(_transformComics);
+    // return res.data.results;
+  };
+
+  const getComic = async (id) => {
+    const res = await request(`${_apiBase}comics/${id}?${_apiKey}`);
+    return _transformComics(res.data.results[0]);
+  };
+
   const _transformCharacter = (char) => {
     return {
       name: char.name,
@@ -30,6 +43,32 @@ const useMarvelService = () => {
       comics: char.comics.items,
     };
   };
-  return { loading, error, clearError, getAllCharacters, getCharacter };
+  const _transformComics = (comics) => {
+    return {
+      title: comics.title,
+      description: comics.description
+        ? comics.description
+        : "There is no description",
+      image: comics.thumbnail.path + "." + comics.thumbnail.extension,
+      price:
+        +comics.prices[0].price > 0
+          ? `${comics.prices[0].price}$`
+          : "NOT AVAILABLE",
+      id: comics.id,
+      pageCount: comics.pageCount
+        ? `${comics.pageCount} p.`
+        : "No information about the number of pages",
+      language: comics.textObjects.language || "en-us",
+    };
+  };
+  return {
+    loading,
+    error,
+    clearError,
+    getAllCharacters,
+    getCharacter,
+    getAllComicses,
+    getComic,
+  };
 };
 export default useMarvelService;
