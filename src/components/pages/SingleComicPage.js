@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Spinner from "../spinner/Spinner";
 import ErrorMessage from "../errorMessage/ErrorMessage";
 import useMarvelService from "../../services/MarvelService";
+import AppBanner from "../appBanner/AppBanner";
 import "./singleComicPage.scss";
 
 const SingleComicPage = () => {
@@ -31,6 +32,7 @@ const SingleComicPage = () => {
   const content = !(loading || error || !comic) ? <View comic={comic} /> : null;
   return (
     <>
+      <AppBanner />
       {errorMessage}
       {spinner}
       {content}
