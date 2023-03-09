@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { CSSTransition, TransitionGroup } from "react-transition-group";
 import PropTypes from "prop-types";
 import useMarvelService from "../../services/MarvelService";
@@ -7,13 +7,28 @@ import ErrorMessage from "../errorMessage/ErrorMessage";
 
 import "./charList.scss";
 
+const setContent = (process, Component, newItemLoading) => {
+  switch (process) {
+    case "waiting":
+      return <Spinner />;
+    case "loading":
+      return newItemLoading ? <Component /> : <Spinner />;
+    case "confirmed":
+      return <Component />;
+    case "error":
+      return <ErrorMessage />;
+    default:
+      throw new Error("Unexpected process state");
+  }
+};
+
 const CharList = (props) => {
   const [list, setList] = useState([]);
   const [newItemLoading, setNewItemLoading] = useState(false);
   const [offset, setOffset] = useState(210);
   const [charEnded, setCharEnded] = useState(false);
 
-  const { loading, error, getAllCharacters } = useMarvelService();
+  const { getAllCharacters, process, setProcess } = useMarvelService();
 
   useEffect(() => {
     onRequest(offset, true);
@@ -32,7 +47,9 @@ const CharList = (props) => {
 
   const onRequest = (offset, initial) => {
     initial ? setNewItemLoading(false) : setNewItemLoading(true);
-    getAllCharacters(offset).then(onCharListLoaded);
+    getAllCharacters(offset)
+      .then(onCharListLoaded)
+      .then(() => setProcess("confirmed"));
   };
 
   const onCharListLoaded = (newList) => {
@@ -47,42 +64,46 @@ const CharList = (props) => {
     setCharEnded(ended);
   };
 
-  const errorMessage = error ? <ErrorMessage /> : null;
-  const spinner = loading && !newItemLoading ? <Spinner /> : null;
+  const renderItems = (list) => {
+    const items = list.map(({ id, thumb, name }, i) => {
+      const imgStyle =
+        thumb ===
+        "http://i.annihil.us/u/prod/marvel/i/mg/b/40/image_not_available.jpg"
+          ? { objectFit: "contain" }
+          : { objectFit: "cover" };
+      return (
+        <CSSTransition key={id} timeout={500} classNames="char__item">
+          <li
+            ref={(el) => (itemRefs.current[i] = el)}
+            tabIndex="0"
+            className="char__item"
+            key={id}
+            onClick={() => {
+              onItemFocus(i);
+              props.onCharSelected(id);
+            }}
+          >
+            <img src={thumb} alt="character" style={imgStyle} />
+            <div className="char__name">{name}</div>
+          </li>
+        </CSSTransition>
+      );
+    });
+    return (
+      <ul className="char__grid">
+        <TransitionGroup component={null}>{items}</TransitionGroup>
+      </ul>
+    );
+  };
+
+  const elements = useMemo(() => {
+    return setContent(process, () => renderItems(list), newItemLoading);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [process]);
 
   return (
     <div className="char__list">
-      {errorMessage}
-      {spinner}
-      <ul className="char__grid">
-        <TransitionGroup component={null}>
-          {list.length > 0 &&
-            list.map(({ id, thumb, name }, i) => {
-              const imgStyle =
-                thumb ===
-                "http://i.annihil.us/u/prod/marvel/i/mg/b/40/image_not_available.jpg"
-                  ? { objectFit: "contain" }
-                  : { objectFit: "cover" };
-              return (
-                <CSSTransition key={id} timeout={500} classNames="char__item">
-                  <li
-                    ref={(el) => (itemRefs.current[i] = el)}
-                    tabIndex="0"
-                    className="char__item"
-                    key={id}
-                    onClick={() => {
-                      onItemFocus(i);
-                      props.onCharSelected(id);
-                    }}
-                  >
-                    <img src={thumb} alt="character" style={imgStyle} />
-                    <div className="char__name">{name}</div>
-                  </li>
-                </CSSTransition>
-              );
-            })}
-        </TransitionGroup>
-      </ul>
+      {elements}
       <button
         className="button button__main button__long"
         disabled={newItemLoading}

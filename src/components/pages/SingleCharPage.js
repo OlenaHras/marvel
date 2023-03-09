@@ -3,16 +3,16 @@ import { Link, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 
 import useMarvelService from "../../services/MarvelService";
+import setContent from "../../utils/setContent";
 import AppBanner from "../appBanner/AppBanner";
-import Spinner from "../spinner/Spinner";
-import ErrorMessage from "../errorMessage/ErrorMessage";
 
 import "./singleComicPage.scss";
 
 const SingleCharPage = () => {
   const { charName } = useParams();
   const [charInfo, setCharInfo] = useState(null);
-  const { loading, error, getComicByName, clearError } = useMarvelService();
+  const { getComicByName, clearError, process, setProcess } =
+    useMarvelService();
 
   useEffect(() => {
     updateChar();
@@ -22,33 +22,27 @@ const SingleCharPage = () => {
   const updateChar = () => {
     clearError();
 
-    getComicByName(charName).then((data) => {
-      charInfoLoaded(data);
-    });
+    getComicByName(charName)
+      .then((data) => {
+        charInfoLoaded(data);
+      })
+      .then(() => setProcess("confirmed"));
   };
 
   const charInfoLoaded = (info) => {
     setCharInfo(info[0]);
   };
 
-  const errorMessage = error ? <ErrorMessage /> : null;
-  const spinner = loading ? <Spinner /> : null;
-  const content = !(loading || error || !charInfo) ? (
-    <View char={charInfo} />
-  ) : null;
-
   return (
     <>
       <AppBanner />
-      {errorMessage}
-      {spinner}
-      {content}
+      {setContent(process, View, charInfo)}
     </>
   );
 };
 
-const View = ({ char }) => {
-  const { thumb, name, description } = char;
+const View = ({ data }) => {
+  const { thumb, name, description } = data;
   return (
     <div className="single-comic">
       <Helmet>
