@@ -1,4 +1,4 @@
-// import AppBanner from "../appBanner/AppBanner";
+import { Helmet } from "react-helmet";
 import { Link, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 
@@ -16,7 +16,6 @@ const SingleCharPage = () => {
 
   useEffect(() => {
     updateChar();
-    console.log(charName);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [charName]);
 
@@ -25,14 +24,13 @@ const SingleCharPage = () => {
 
     getComicByName(charName).then((data) => {
       charInfoLoaded(data);
-      // console.log(data);
     });
   };
 
   const charInfoLoaded = (info) => {
     setCharInfo(info[0]);
-    console.log(info[0]);
   };
+
   const errorMessage = error ? <ErrorMessage /> : null;
   const spinner = loading ? <Spinner /> : null;
   const content = !(loading || error || !charInfo) ? (
@@ -50,16 +48,17 @@ const SingleCharPage = () => {
 };
 
 const View = ({ char }) => {
+  const { thumb, name, description } = char;
   return (
     <div className="single-comic">
-      <img
-        src={char.thumb}
-        alt={char.name}
-        className="single-comic-char__img"
-      />
+      <Helmet>
+        <meta name="description" content={`${name} character page`} />
+        <title>{name}</title>
+      </Helmet>
+      <img src={thumb} alt={name} className="single-comic-char__img" />
       <div className="single-comic__info">
-        <h2 className="single-comic__name">{char.name}</h2>
-        <p className="single-comic__descr">{char.description}</p>
+        <h2 className="single-comic__name">{name}</h2>
+        <p className="single-comic__descr">{description}</p>
       </div>
       <Link to="/" className="single-comic__back">
         Back to main page
